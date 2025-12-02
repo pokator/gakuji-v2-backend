@@ -256,13 +256,6 @@ Test with:
 curl https://your-service-name.onrender.com/health
 ```
 
-### Important Notes for Render
-
-- **Cold Starts**: Free tier services sleep after 15 minutes of inactivity. First request after sleep takes ~30-60 seconds.
-- **Build Time**: Initial builds can take 5-10 minutes due to dependency installation.
-- **Memory Limits**: Free tier has 512MB RAM. Monitor usage if processing large lyrics.
-- **Monthly Limits**: 750 hours/month (enough for 24/7 uptime of one service).
-
 ## Development
 
 ### Adding New Dependencies
@@ -302,56 +295,6 @@ View logs:
 # Render
 # View logs in the Render dashboard under "Logs" tab
 ```
-
-## Troubleshooting
-
-### Issue: `jamdict-data` won't install on Windows
-
-**Solution:** You don't need it! Use the default Jamdict database location:
-```bash
-pip install jamdict  # Skip jamdict-data
-```
-
-### Issue: DeepL API rate limits
-
-**Solution:** 
-- Free tier: 500,000 characters/month
-- Implement caching to reduce API calls
-- Consider upgrading to DeepL Pro
-
-### Issue: Memory errors on Render
-
-**Solution:**
-- Upgrade to paid tier for more RAM
-- Optimize `memory_mode` setting in Jamdict initialization
-- Process lyrics in smaller chunks
-
-### Issue: Cold start timeouts
-
-**Solution:**
-- Upgrade to paid tier ($7/month) for always-on service
-- Accept 30-60 second initial delay on free tier
-- Consider a keep-alive service (ping every 14 minutes)
-
-### Issue: Port already in use
-
-**Solution:**
-```bash
-# Kill process using port 8000
-# Windows
-netstat -ano | findstr :8000
-taskkill /PID <PID> /F
-
-# Mac/Linux
-lsof -ti:8000 | xargs kill
-```
-
-## API Rate Limits
-
-- **DeepL Free**: 500,000 characters/month
-- **DeepL Pro**: Starts at 100,000 characters for $5.49/month
-- **Render Free**: 750 compute hours/month, 100GB bandwidth
-
 ## Security Notes
 
 - Never commit `.env` files
@@ -376,19 +319,10 @@ lsof -ti:8000 | xargs kill
    - Already using FastAPI's async capabilities
    - Consider background tasks for long-running operations
 
-## License
-
-[Your License Here]
-
-## Contributing
-
-[Your Contributing Guidelines Here]
-
 ## Support
 
 For issues and questions:
-- GitHub Issues: [Your repo URL]/issues
-- Email: [Your email]
+- Email: sourav@utexas.edu
 
 ## Acknowledgments
 
