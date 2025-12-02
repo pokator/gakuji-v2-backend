@@ -126,7 +126,7 @@ def get_all_kanji_data(kanji_list):
         all_kanji_data[kanji] = data
     return all_kanji_data
 
-jam = Jamdict(memory_mode=True)
+jam = Jamdict(db_file="jamdict_data/jamdict.db")
 t = Tokenizer()
 
 # tokenize a line. For each line, return a list of tuples of (surface, token)
@@ -346,7 +346,7 @@ def process_lyrics(lyrics: str):
 # print("Word Map:", b)
 # print("Kanji Data:", c)
 
-# print(get_word_info("ばか"))
+print(get_word_info("ばか"))
 
 # #write to a file
 # with open('output.json', 'w', encoding='utf-8') as f:

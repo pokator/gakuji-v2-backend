@@ -11,6 +11,5 @@ venv/
 node_modules
 logs
 output.json
-jamdict_data
 base-file
 *.log

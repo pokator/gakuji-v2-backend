@@ -1,3 +1,4 @@
+from pathlib import Path
 import deepl
 from jamdict import Jamdict
 from janome.tokenizer import Tokenizer
@@ -8,7 +9,10 @@ from app.utils.text_processing import load_kanji_data, extract_unicode_block, CO
 
 # Initialize expensive resources
 deepl_client = deepl.DeepLClient(settings.deepl_key)
-jam = Jamdict()
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+db_path = PROJECT_ROOT / "jamdict_data" / "jamdict.db"
+
+jam = Jamdict(db_file=str(db_path))
 t = Tokenizer()
 supabase_client: Client = create_client(settings.supabase_url, settings.supabase_key)
 

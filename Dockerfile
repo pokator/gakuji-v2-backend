@@ -12,6 +12,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+# If jamdict_data/jamdict.db exists in the image, also place a copy in
+# Jamdict's default location (~/.jamdict/data) so `Jamdict()` can find it.
+# Use `cp -n` to avoid overwriting and fail-safe with `|| true`.
+RUN if [ -f ./jamdict_data/jamdict.db ]; then \
+            mkdir -p /root/.jamdict/data && cp -n ./jamdict_data/jamdict.db /root/.jamdict/data/ || true; \
+        fi
+
 # default port (can be overridden by environment)
 ENV PORT=8000
 

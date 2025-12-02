@@ -13,4 +13,3 @@ venv/
 output.json
 .vscode/
 .idea/
-jamdict_data/*.db
