@@ -25,4 +25,4 @@ ENV PORT=8000
 EXPOSE 8000
 
 # Use shell form so $PORT is expanded at runtime
-CMD ["sh", "-c", "gunicorn -k uvicorn.workers.UvicornWorker app.main:app --bind 0.0.0.0:$PORT --workers 1"]
+CMD ["sh", "-c", "gunicorn -k uvicorn.workers.UvicornWorker app.main:app --bind 0.0.0.0:$PORT --workers 1 --timeout 180 --graceful-timeout 180"]
