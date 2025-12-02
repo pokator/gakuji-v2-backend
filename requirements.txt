@@ -1,0 +1,32 @@
+﻿certifi==2025.11.12
+charset-normalizer==3.4.4
+chirptext==0.1.2
+deepl==1.25.0
+distlib==0.4.0
+filelock==3.20.0
+idna==3.11
+jamdict==0.1a11.post2
+Janome==0.5.0
+numpy==2.3.1
+packaging==25.0
+pipenv==2025.0.4
+platformdirs==4.5.0
+puchikarui==0.1
+pygame==2.6.1
+python-dotenv==1.2.1
+requests==2.32.5
+setuptools==80.9.0
+supabase>=2.18.0
+urllib3==2.5.0
+virtualenv==20.35.4
+
+# Web framework
+fastapi>=0.99.0
+
+# Pydantic settings (used in app/config.py)
+pydantic>=2.0.0
+pydantic-settings>=0.1.0
+
+# Production ASGI servers
+uvicorn[standard]>=0.22.0
+gunicorn>=20.1.0

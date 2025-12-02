@@ -1,0 +1,16 @@
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv
+.env
+.git
+node_modules
+logs
+output.json
+jamdict_data
+base-file
+*.log
