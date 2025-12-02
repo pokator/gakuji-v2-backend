@@ -215,7 +215,8 @@ def process_lyrics(lyrics: str) -> Tuple[List[List[str]], Dict[str, Any], Dict[s
             tokens_list = []
             for word in lyric_line:
                 if word in word_map and word_map[word]:
-                    idseqs = [entry['idseq'] for entry in word_map[word]]
+                    # filter out empty/None idseq values and normalize to strings
+                    idseqs = [str(entry.get('idseq')).strip() for entry in word_map[word] if str(entry.get('idseq')).strip()]
                     tokens_list.append({'token': word, 'idseqs': idseqs})
             # insert
             supabase_client.table('lines').insert({'line': joined_line, 'translation': translation, 'tokens': tokens_list}).execute()
@@ -274,8 +275,18 @@ def get_word_info_from_idseq(idseq: str) -> Dict[str, Any] | None:
 def get_word_info_from_idseqs(idseqs: List[int]) -> List[Dict[str, Any]]:
     word_info = []
     for idseq in idseqs:
-        id = "id#" + str(idseq)
-        entry_result = get_word_info_from_idseq(id)
+        # Ensure we don't pass empty or invalid idseq values to jam.lookup
+        if idseq is None:
+            continue
+        idseq_str = str(idseq).strip()
+        if not idseq_str:
+            continue
+        id = "id#" + idseq_str
+        try:
+            entry_result = get_word_info_from_idseq(id)
+        except ValueError:
+            # jam.lookup or downstream code may raise ValueError when id is malformed
+            continue
         if entry_result:
             word_info.append(entry_result)
     return word_info[:4] 
