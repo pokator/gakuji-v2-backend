@@ -11,37 +11,42 @@ from app.utils.text_processing import load_kanji_data, extract_unicode_block, CO
 
 # Initialize expensive resources
 deepl_client = deepl.DeepLClient(settings.deepl_key)
-logger = logging.getLogger(__name__)
-
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 
-# Debug logging
-logger.info(f"PROJECT_ROOT: {PROJECT_ROOT}")
-logger.info(f"Current working directory: {os.getcwd()}")
+# Debug output (use print with flush=True to ensure it appears in Railway logs)
+print(f"PROJECT_ROOT: {PROJECT_ROOT}", flush=True)
+print(f"Current working directory: {os.getcwd()}", flush=True)
 
 # Check multiple possible paths
 volume_path = Path("/jamdict_data/jamdict.db")
 app_path = Path("/app/jamdict_data/jamdict.db")
 local_path = PROJECT_ROOT / "jamdict_data" / "jamdict.db"
 
-logger.info(f"Checking volume_path: {volume_path}, exists: {volume_path.exists()}")
-logger.info(f"Checking app_path: {app_path}, exists: {app_path.exists()}")
-logger.info(f"Checking local_path: {local_path}, exists: {local_path.exists()}")
+print(f"Checking volume_path: {volume_path}, exists: {volume_path.exists()}", flush=True)
+print(f"Checking app_path: {app_path}, exists: {app_path.exists()}", flush=True)
+print(f"Checking local_path: {local_path}, exists: {local_path.exists()}", flush=True)
 
 # List contents of /jamdict_data if it exists
 if os.path.exists("/jamdict_data"):
-    logger.info(f"Contents of /jamdict_data: {os.listdir('/jamdict_data')}")
+    try:
+        contents = os.listdir('/jamdict_data')
+        print(f"Contents of /jamdict_data: {contents}", flush=True)
+    except Exception as e:
+        print(f"Error listing /jamdict_data: {e}", flush=True)
+else:
+    print("/jamdict_data directory does not exist", flush=True)
 
 # Check if running in Railway with volume mounted
 if volume_path.exists():
     db_path = volume_path
+    print(f"Using volume path: {db_path}", flush=True)
 elif app_path.exists():
     db_path = app_path
+    print(f"Using app path: {db_path}", flush=True)
 else:
     # Local development path
     db_path = local_path
-
-logger.info(f"Using db_path: {db_path}")
+    print(f"Using local path: {db_path}", flush=True)
 
 jam = Jamdict(db_file=str(db_path))
 t = Tokenizer()
