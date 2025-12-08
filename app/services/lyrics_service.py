@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 import deepl
 from jamdict import Jamdict
 from janome.tokenizer import Tokenizer
@@ -10,7 +11,13 @@ from app.utils.text_processing import load_kanji_data, extract_unicode_block, CO
 # Initialize expensive resources
 deepl_client = deepl.DeepLClient(settings.deepl_key)
 PROJECT_ROOT = Path(__file__).parent.parent.parent
-db_path = PROJECT_ROOT / "jamdict_data" / "jamdict.db"
+
+# Check if running in Railway with volume mounted
+if os.path.exists("/jamdict_data/jamdict.db"):
+    db_path = Path("/jamdict_data/jamdict.db")
+else:
+    # Local development path
+    db_path = PROJECT_ROOT / "jamdict_data" / "jamdict.db"
 
 jam = Jamdict(db_file=str(db_path))
 t = Tokenizer()
