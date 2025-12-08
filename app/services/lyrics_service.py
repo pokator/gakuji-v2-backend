@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+import logging
 import deepl
 from jamdict import Jamdict
 from janome.tokenizer import Tokenizer
@@ -10,14 +11,37 @@ from app.utils.text_processing import load_kanji_data, extract_unicode_block, CO
 
 # Initialize expensive resources
 deepl_client = deepl.DeepLClient(settings.deepl_key)
+logger = logging.getLogger(__name__)
+
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 
+# Debug logging
+logger.info(f"PROJECT_ROOT: {PROJECT_ROOT}")
+logger.info(f"Current working directory: {os.getcwd()}")
+
+# Check multiple possible paths
+volume_path = Path("/jamdict_data/jamdict.db")
+app_path = Path("/app/jamdict_data/jamdict.db")
+local_path = PROJECT_ROOT / "jamdict_data" / "jamdict.db"
+
+logger.info(f"Checking volume_path: {volume_path}, exists: {volume_path.exists()}")
+logger.info(f"Checking app_path: {app_path}, exists: {app_path.exists()}")
+logger.info(f"Checking local_path: {local_path}, exists: {local_path.exists()}")
+
+# List contents of /jamdict_data if it exists
+if os.path.exists("/jamdict_data"):
+    logger.info(f"Contents of /jamdict_data: {os.listdir('/jamdict_data')}")
+
 # Check if running in Railway with volume mounted
-if os.path.exists("/jamdict_data/jamdict.db"):
-    db_path = Path("/jamdict_data/jamdict.db")
+if volume_path.exists():
+    db_path = volume_path
+elif app_path.exists():
+    db_path = app_path
 else:
     # Local development path
-    db_path = PROJECT_ROOT / "jamdict_data" / "jamdict.db"
+    db_path = local_path
+
+logger.info(f"Using db_path: {db_path}")
 
 jam = Jamdict(db_file=str(db_path))
 t = Tokenizer()
