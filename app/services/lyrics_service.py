@@ -13,42 +13,74 @@ from app.utils.text_processing import load_kanji_data, extract_unicode_block, CO
 deepl_client = deepl.DeepLClient(settings.deepl_key)
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 
-# Debug output (use print with flush=True to ensure it appears in Railway logs)
+# Debug output
 print(f"PROJECT_ROOT: {PROJECT_ROOT}", flush=True)
 print(f"Current working directory: {os.getcwd()}", flush=True)
 
-# Check multiple possible paths
-volume_path = Path("/jamdict_data/jamdict.db")
-app_path = Path("/app/jamdict_data/jamdict.db")
-local_path = PROJECT_ROOT / "jamdict_data" / "jamdict.db"
-
-print(f"Checking volume_path: {volume_path}, exists: {volume_path.exists()}", flush=True)
-print(f"Checking app_path: {app_path}, exists: {app_path.exists()}", flush=True)
-print(f"Checking local_path: {local_path}, exists: {local_path.exists()}", flush=True)
-
-# List contents of /jamdict_data if it exists
-if os.path.exists("/jamdict_data"):
+# Function to recursively search for jamdict.db in a directory
+def find_jamdict_db(base_path):
+    """Recursively search for jamdict.db files"""
+    found_paths = []
     try:
-        contents = os.listdir('/jamdict_data')
-        print(f"Contents of /jamdict_data: {contents}", flush=True)
+        for root, dirs, files in os.walk(base_path):
+            for file in files:
+                if file == "jamdict.db":
+                    full_path = os.path.join(root, file)
+                    file_size = os.path.getsize(full_path)
+                    found_paths.append((full_path, file_size))
+                    print(f"Found jamdict.db at: {full_path} (size: {file_size} bytes)", flush=True)
     except Exception as e:
-        print(f"Error listing /jamdict_data: {e}", flush=True)
+        print(f"Error searching {base_path}: {e}", flush=True)
+    return found_paths
+
+# Search in volume mount
+print("\n=== Searching /jamdict_data for jamdict.db files ===", flush=True)
+if os.path.exists("/jamdict_data"):
+    print(f"Contents of /jamdict_data: {os.listdir('/jamdict_data')}", flush=True)
+    volume_files = find_jamdict_db("/jamdict_data")
 else:
     print("/jamdict_data directory does not exist", flush=True)
+    volume_files = []
 
-# Check if running in Railway with volume mounted
-if volume_path.exists():
-    db_path = volume_path
-    print(f"Using volume path: {db_path}", flush=True)
-elif app_path.exists():
-    db_path = app_path
-    print(f"Using app path: {db_path}", flush=True)
+# Search in app directory
+print("\n=== Searching /app/jamdict_data for jamdict.db files ===", flush=True)
+if os.path.exists("/app/jamdict_data"):
+    print(f"Contents of /app/jamdict_data: {os.listdir('/app/jamdict_data')}", flush=True)
+    app_files = find_jamdict_db("/app/jamdict_data")
 else:
-    # Local development path
-    db_path = local_path
-    print(f"Using local path: {db_path}", flush=True)
+    print("/app/jamdict_data directory does not exist", flush=True)
+    app_files = []
+
+# Determine which path to use
+db_path = None
+
+# Priority 1: Use volume file if it exists and is reasonably large (> 1MB)
+for path, size in volume_files:
+    if size > 1_000_000:  # Larger than 1MB
+        db_path = Path(path)
+        print(f"\n✓ Using volume database: {db_path} ({size:,} bytes)", flush=True)
+        break
+
+# Priority 2: Use app directory file if no suitable volume file found
+if db_path is None:
+    for path, size in app_files:
+        if size > 1_000_000:  # Larger than 1MB
+            db_path = Path(path)
+            print(f"\n✓ Using app directory database: {db_path} ({size:,} bytes)", flush=True)
+            break
+
+# Priority 3: Fall back to default path
+if db_path is None:
+    db_path = PROJECT_ROOT / "jamdict_data" / "jamdict.db"
+    print(f"\n⚠ No jamdict.db found, using default path: {db_path}", flush=True)
+    if db_path.exists():
+        size = os.path.getsize(db_path)
+        print(f"  File exists with size: {size:,} bytes", flush=True)
+    else:
+        print(f"  WARNING: File does not exist at this path!", flush=True)
 
 jam = Jamdict(db_file=str(db_path))
+print(f"\n✓ Jamdict initialized successfully with: {db_path}", flush=True)
 t = Tokenizer()
 supabase_client: Client = create_client(settings.supabase_url, settings.supabase_key)
 
