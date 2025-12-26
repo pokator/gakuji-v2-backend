@@ -251,6 +251,73 @@ def get_line_from_db(line: str) -> Tuple[str, List[Dict[str, Any]]] | None:
         return translation, tokens
     return None
 
+
+def sync_lyrics_lines(original_lyrics: str, modified_lyrics: str) -> Tuple[List[List[str]], Dict[str, Any], Dict[str, Any], List[Tuple[str, str]]]:
+    """Compare original and modified lyrics line-by-line and apply deletes/inserts to Supabase.
+
+    This implementation performs client-side delete+insert operations. It assumes `line` is
+    the primary key in the `lines` table.
+    """
+    from app.utils.text_processing import dakuten_check
+    import difflib
+
+    deleted = 0
+    inserted = 0
+    failed = 0
+    details: List[Dict[str, Any]] = []
+
+    orig_lines = original_lyrics.split('\n') if original_lyrics else []
+    mod_lines = modified_lyrics.split('\n') if modified_lyrics else []
+    orig_lines = dakuten_check(orig_lines)
+    mod_lines = dakuten_check(mod_lines)
+
+    matcher = difflib.SequenceMatcher(None, orig_lines, mod_lines)
+    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+        # delete/replace -> remove old lines
+        if tag in ("delete", "replace"):
+            for old_line in orig_lines[i1:i2]:
+                try:
+                    supabase_client.table('lines').delete().eq('line', old_line).execute()
+                    deleted += 1
+                except Exception as e:
+                    failed += 1
+                    details.append({"op": "delete", "line": old_line, "error": str(e)})
+
+        # insert/replace -> insert new lines
+        if tag in ("insert", "replace"):
+            for new_line in mod_lines[j1:j2]:
+                try:
+                    # if it already exists, skip
+                    if get_line_from_db(new_line):
+                        continue
+
+                    tokenized = tokenize_line(new_line)
+                    word_map: Dict[str, Any] = {}
+                    lyric_line = process_tokenized_line(tokenized, word_map)
+                    joined_line = ''.join([surface for surface, _ in tokenized])
+
+                    if not lyric_line or not is_japanese(joined_line):
+                        translation = joined_line
+                    else:
+                        result = deepl_client.translate_text(joined_line, source_lang="JA", target_lang="EN-US")
+                        translation = result.text  # type: ignore
+
+                    tokens_list: List[Dict[str, Any]] = []
+                    for word in lyric_line:
+                        if word in word_map and word_map[word]:
+                            idseqs = [str(entry.get('idseq')).strip() for entry in word_map[word] if str(entry.get('idseq')).strip()]
+                            tokens_list.append({'token': word, 'idseqs': idseqs})
+
+                    supabase_client.table('lines').insert({'line': joined_line, 'translation': translation, 'tokens': tokens_list}).execute()
+                    inserted += 1
+                except Exception as e:
+                    failed += 1
+                    details.append({"op": "insert", "line": new_line, "error": str(e)})
+
+    # After applying DB changes, return the processed representation of the modified lyrics
+    lyric_lines, word_map, kanji_data_dict, translated_lines = process_lyrics(modified_lyrics)
+    return lyric_lines, word_map, kanji_data_dict, translated_lines
+
 def get_word_info_from_idseq(idseq: str) -> Dict[str, Any] | None:
     result = jam.lookup(idseq)
     for entry in result.entries:

@@ -2,10 +2,12 @@ from fastapi import APIRouter, HTTPException, Request
 from app.models.schemas import (
     LyricsRequest,
     LyricsResponse,
+    EditLyricsRequest,
+    UpdateLyricsResponse,
     KanjiResponse,
     WordResponse,
 )
-from app.services.lyrics_service import process_lyrics, get_kanji_data, get_word_info_from_idseqs
+from app.services.lyrics_service import process_lyrics, get_kanji_data, get_word_info_from_idseqs, sync_lyrics_lines
 import logging
 
 router = APIRouter()
@@ -83,4 +85,24 @@ async def lookup_word(idseq: int):
         raise
     except Exception as e:
         logger.error(f"Error looking up idseq '{idseq}': {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/sync-lyrics", response_model=LyricsResponse)
+async def sync_lyrics_endpoint(request: EditLyricsRequest):
+    try:
+        if not request.original_lyrics and not request.modified_lyrics:
+            raise HTTPException(status_code=400, detail="Both original and modified lyrics cannot be empty")
+
+        lyric_lines, word_map, kanji_data_dict, translated_lines = sync_lyrics_lines(request.original_lyrics or "", request.modified_lyrics or "")
+        return {
+            "lyrics_lines": lyric_lines,
+            "word_map": word_map,
+            "kanji_data": kanji_data_dict,
+            "translated_lines": translated_lines,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error syncing lyrics: {e}")
         raise HTTPException(status_code=500, detail=str(e))

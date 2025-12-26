@@ -6,6 +6,18 @@ class LyricsRequest(BaseModel):
     lyrics: str
 
 
+class EditLyricsRequest(BaseModel):
+    original_lyrics: str
+    modified_lyrics: str
+
+
+class UpdateLyricsResponse(BaseModel):
+    deleted: int
+    inserted: int
+    failed: int = 0
+    details: Optional[List[Dict[str, Any]]] = None
+
+
 class LyricsResponse(BaseModel):
     lyrics_lines: List[List[str]]
     word_map: Dict[str, Any]
