@@ -7,5 +7,7 @@ class Settings(BaseSettings):
     port: int = 8000
     supabase_url: str = ""
     supabase_key: str = ""
+    anki_connect_url: str = "http://localhost:8765"
+    anki_connect_timeout: int = 30
 
 settings = Settings()

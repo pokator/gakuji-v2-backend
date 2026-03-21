@@ -29,6 +29,7 @@ pydantic = ">=2.0.0"
 pydantic-settings = ">=0.1.0"
 gunicorn = ">=20.1.0"
 uvicorn = {extras = ["standard"], version = ">=0.22.0"}
+pytest = "*"
 
 [dev-packages]
 

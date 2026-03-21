@@ -1,8 +1,9 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 import logging
-from app.routers.lyrics import router
-from app.exceptions import LyricsProcessingError
+from app.routers.lyrics import router as lyrics_router
+from app.routers.anki import router as anki_router
+from app.exceptions import LyricsProcessingError, AnkiConnectError
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -21,7 +22,8 @@ app.add_middleware(
 )
 
 # Include routers
-app.include_router(router)
+app.include_router(lyrics_router)
+app.include_router(anki_router)
 
 
 # Health check endpoint for readiness/liveness probes
@@ -34,3 +36,15 @@ async def health_check():
 async def lyrics_processing_exception_handler(request: Request, exc: LyricsProcessingError):
     logger.error(f"Lyrics processing error: {exc}")
     raise HTTPException(status_code=500, detail="Lyrics processing failed")
+
+
+@app.exception_handler(AnkiConnectError)
+async def anki_connect_exception_handler(request: Request, exc: AnkiConnectError):
+    logger.error(f"AnkiConnect error: {exc}")
+    error_msg = str(exc)
+    if "timeout" in error_msg.lower():
+        raise HTTPException(status_code=503, detail="AnkiConnect request timed out")
+    elif "connect" in error_msg.lower():
+        raise HTTPException(status_code=503, detail="Failed to connect to AnkiConnect")
+    else:
+        raise HTTPException(status_code=400, detail=error_msg)
