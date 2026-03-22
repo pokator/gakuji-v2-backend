@@ -135,7 +135,7 @@ KANJI_MODEL = {
             <div class='readings'>訓: {{Kunyomi}}</div>
             <div class='definitions'>{{Definitions}}</div>
             {{#Radicals}}<div class='radicals'> radicals: {{Radicals}}</div>{{/Radicals}}
-            {{#JLPT}}<div class='jlpt'>JLPT {{JLPT}}</div>{{/JLPT}}
+            {{#JLPT}}<div class='jlpt'>JLPT N{{JLPT}}</div>{{/JLPT}}
         """,
     }],
 }
